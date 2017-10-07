@@ -36,7 +36,6 @@ if __name__ == '__main__':
 	strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
 	# Intialize the library (must be called once before other functions).
 	strip.begin()
-
 	while True:
 		r, g, b = [int(v) for v in raw_input('Enter r, g, b values:').split(",")]
 		print ('Press Ctrl-C to quit.')

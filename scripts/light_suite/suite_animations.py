@@ -13,7 +13,7 @@ import numpy as np
 # LED strip configuration:
 LED_PER_METER  = 30		 # Number of LEDs per meter
 LED_COUNT      = 120      # Number of LED pixels.
-LED_PIN        = 12      # GPIO pin connected to the pixels (12 & 18 uses PWM!).
+LED_PIN        = 18      # GPIO pin connected to the pixels (12 & 18 uses PWM!).
 #LED_PIN        = 10      # GPIO pin connected to the pixels (10 uses SPI /dev/spidev0.0).
 LED_FREQ_HZ    = 800000  # LED signal frequenpcy in hertz (usually 800khz)
 LED_DMA        = 5       # DMA channel to use for generating signal (try 5)
@@ -35,8 +35,50 @@ def setColor(strip, color):
 	for i in range(strip.numPixels()):
 		strip.setPixelColor(i, color)
 	strip.show()
-	time.sleep(wait_ms/1000.0)
 
+def movingBump(strip, color1, color2, wait_ms=50, iterations=10, dir=1):
+
+	under_arms = [list(range(6, 40)), [x for x in reversed(range(81, 115))]]
+	top_arms = [list(range(60, 81)), [x for x in reversed(range(40, 59))]]
+	waist = [list(range(114, 120)), [x for x in reversed(range(0, 6))]]
+
+	for j in range(iterations):
+		for qdx, q in enumerate(under_arms[0]):
+
+
+			setPixel(strip, color2, 6 + qdx - 2, [6, 40])
+			setPixel(strip, color1, 6 + qdx - 1, [6, 40])
+			setPixel(strip, color1, 6 + qdx, [6, 40])
+
+			setPixel(strip, color1, 114 - qdx + 2, [81, 115])
+			setPixel(strip, color1, 114 - qdx + 1, [81, 115])
+			setPixel(strip, color2, 114 - qdx, [81, 115])
+
+			setPixel(strip, color2, 60 + qdx - 2, [60, 81])
+			setPixel(strip, color1, 60 + qdx - 1, [60, 81])
+			setPixel(strip, color1, 60 + qdx, [60, 81])
+
+			setPixel(strip, color1, 58 - qdx + 2, [40, 59])
+			setPixel(strip, color1, 58 - qdx + 1, [40, 59])
+			setPixel(strip, color2, 58 - qdx, [40, 59])
+
+			setPixel(strip, color2, 114 + qdx - 2, [114, 120])
+			setPixel(strip, color1, 114 + qdx - 1, [114, 120])
+			setPixel(strip, color1, 114 + qdx, [114, 120])
+
+			setPixel(strip, color1, 5 - qdx + 2, [0, 6])
+			setPixel(strip, color1, 5 - qdx + 1, [0, 6])
+			setPixel(strip, color2, 5 - qdx, [0, 6])
+
+
+			strip.show()
+			time.sleep(wait_ms/1000.0)
+			for i in range(0, strip.numPixels()):
+				strip.setPixelColor(i, 0)
+
+def setPixel(strip, color, i, range):
+	if i < range[1] and i >= range[0]:
+		strip.setPixelColor(i, color)
 
 # p(t) = color * ((sin([rad/s] * [s] * [pixNr] * [m / pix] + 1) / 2)
 def sinWave(strip, px_range, colorList, freq=10, period_meters=1, offset=0):  # f defines the rate at which the wave moves. period_meters the period of sine wave in meter
@@ -52,7 +94,7 @@ def sinWave(strip, px_range, colorList, freq=10, period_meters=1, offset=0):  # 
 		color = Color(r, g, b)
 		strip.setPixelColor(i, color)
 	print("#######################################")
-	
+
 	strip.show()
 	# print(reds)
 
@@ -137,34 +179,47 @@ def centreRunLS(strip, color1, color2, wait_ms=50, iterations=10, dir=1):
 			strip.show()
 			time.sleep(wait_ms/1000.0)
 			for i in range(0, strip.numPixels(), 3):
-				strip.setPixelColor(i + q, 0)
+				strip.setPixelColor(i, 0)
+
+
+# Define functions which animate LEDs in various ways.
+def colorWipe(strip, color, wait_ms=50):
+	"""Wipe color across display a pixel at a time."""
+	for i in range(strip.numPixels()):
+		strip.setPixelColor(i, color)
+		strip.show()
+		time.sleep(wait_ms/1000.0)
+
 
 # Main program logic follows:
 if __name__ == '__main__':
-	# Load config
-	with open('config.txt', 'r') as file:
-		config = file.readlines()
 	# Create NeoPixel object with appropriate configuration.
 	strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL, LED_STRIP)
 	# Intialize the library (must be called once before other functions).
 	strip.begin()
 
-	if config[0][0] == '#':
-		r, g, b = hexToRGB(config[0])
-	else:
-		r, g, b = list(map(int, config[0].split(",")))
-
-	if config[1][0] == '#':
-		r2, g2, b2 = hexToRGB(config[1])
-	else:
-		r2, g2, b2 = list(map(int, config[1].split(",")))
-
-	print("Color 1 RGB: ", r, g, b)
-	print("Color 2 RGB: ", r2, g2, b2)
-	delay=int(config[2])
-	dir=int(config[3])
+	colorWipe(strip, Color(0, 0, 255))  # Blue wipe
 	
 	print('Press Ctrl-C to quit.')
 	while True:
-		centreRunLS(strip, Color(r, g, b), Color(r2, g2, b2), delay, 1000, dir)  # Red wipe
-		# sinWave(strip, [r, g, b])
+		# Load config
+		with open('config.txt', 'r') as file:
+			config = file.readlines()
+
+		if config[0][0] == '#':
+			r, g, b = hexToRGB(config[0])
+		else:
+			r, g, b = list(map(int, config[0].split(",")))
+
+		if config[1][0] == '#':
+			r2, g2, b2 = hexToRGB(config[1])
+		else:
+			r2, g2, b2 = list(map(int, config[1].split(",")))
+
+		delay=int(config[2])
+		dir=int(config[3])
+
+		print("Colors RGB: (", r, g, b, ") - (", r2, g2, b2, ") Rate: ", delay)
+
+		# centreRunLS(strip, Color(r, g, b), Color(r2, g2, b2), delay, 10, dir)
+		movingBump(strip, Color(r, g, b), Color(r2, g2, b2), delay, 10, dir)
